@@ -119,6 +119,11 @@ var SampleApp = function() {
         for (var r in self.routes) {
             self.app.get(r, self.routes[r]);
         }
+
+	['css', 'js', 'external'].forEach(function (dir){
+	    app.use('/'+dir, express.static(__dirname+'/'+dir));
+	});
+
     };
 
 
