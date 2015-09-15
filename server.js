@@ -120,9 +120,9 @@ var SampleApp = function() {
             self.app.get(r, self.routes[r]);
         }
 
-	['css', 'js', 'external'].forEach(function (dir){
-	    app.use('/'+dir, express.static(__dirname+'/'+dir));
-	});
+        ['css', 'js', 'external'].forEach(function (dir){
+            self.app.use('/'+dir, express.static(__dirname+'/'+dir));
+        });
 
     };
 
@@ -161,4 +161,3 @@ var SampleApp = function() {
 var zapp = new SampleApp();
 zapp.initialize();
 zapp.start();
-
