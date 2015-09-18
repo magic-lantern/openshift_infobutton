@@ -1,53 +1,55 @@
-var REST_SERVICE_ROOT_URL = "http://service.oib.utah.edu:8080/infobutton-service/infoRequest?representedOrganization.id.root=http://axeium.net&xsltTransform=Infobutton_UI_AXEIUM&taskContext.c.c=PROBLISTREV&mainSearchCriteria.v.c=38341003&mainSearchCriteria.v.cs=2.16.840.1.113883.6.96&knowledgeResponseType=application/json"
-$.ajaxSetup({timeout:4000});
-
-var infoButtonModel = Backbone.Model.extend({
-  defaults: {
-  },
-  validate: function(attributes){
-    // add this later
-  },
-  initialize: function(){
-    // nothing needed for now
-  },
-  urlRoot: REST_SERVICE_ROOT_URL,
-  sync: function(method, model, options) {
-    // for now only override the read and create URLs
-    switch(method) {
-        case 'read':
-          options.url = model.urlRoot;
-          break;
-        default:
-          console.log("sync method - infoButtonModel model non read ", method);
-          return;
-    }
-    return Backbone.sync(method, model, options);
-  },
-  parse: function(response) {
-    // map server response to expected object attributes
-    console.log("infoButtonModell - server JSON response ", response);
-    //response.id = 1;
-    return response;
+// from http://stackoverflow.com/questions/736513/how-do-i-parse-a-url-into-hostname-and-path-in-javascript
+function getHostname(href) {
+  var location = document.createElement("a");
+  location.href = href;
+  if (location.host === "")
+    location.href = location.href;
+  return location.hostname;
   }
-});
 
-var test = new infoButtonModel();
-
-test.fetch({
-  success: function(model, response, options){
-    console.log("Retrieved infobutton information: ", response);
-  },
-  error: function(model, response, options){
-    console.log("Could not retrieve infobutton information: " , response);
+var models = {};
+$(".problembutton,.labbutton").each(function(index, element) {
+  var de = $(element).data("mainsearchcriteria_v_c");
+  if (de) {
+    models[de] = new infoButtonModel();
+    if ($(element).hasClass("problembutton"))
+      models[de].set("infobuttontype", "problem");
+    if ($(element).hasClass("labbutton"))
+      models[de].set("infobuttontype", "lab");
+    models[de].set("mainsearchcriteria_v_c", de);
+    models[de].set("mainsearchcriteria_v_dn", $(element).data("mainsearchcriteria_v_dn"));
+    models[de].fetch({
+      success: function(model, response, options){
+        console.log("Retrieved infobutton information: ", response);
+        $(element).removeClass('hidden');
+        $('.alert-info').addClass('hidden')
+      },
+      error: function(model, response, options){
+        console.log("Could not retrieve infobutton information: " , response);
+        $('.alert-warning').removeClass('hidden')
+      }
+    });
   }
 });
 
 $(function(){
-  $(".infobutton").click(function(){
-    $("#infoModal").modal('show');
-    var summary = test.get("feed")[0].entry[0].summary.value;
-    var link = test.get("feed")[0].entry[0].link[0].href;
-    $(".modal-content").html(summary);
-    $(".modal-content").append("<p>For more information go to <a href=" + link + " target='_blank'>" + link + "<\a>");
+  $(".problembutton").click(function(e){
+    var m = $(e.currentTarget).data("mainsearchcriteria_v_c");
+    var tmpView = new infoView({
+      model: models[m],
+      template: "#problemViewTemplate"
+    });
+    tmpView.render();
+    $('#problemViewModal').modal('show');
+  });
+
+  $(".labbutton").click(function(e){
+    var m = $(e.currentTarget).data("mainsearchcriteria_v_c");
+    var tmpView = new infoView({
+      model: models[m],
+      template: "#labViewTemplate"
+    });
+    tmpView.render();
+    $('#labViewModal').modal('show');
   });
 })
