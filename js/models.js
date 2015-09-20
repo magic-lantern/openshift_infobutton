@@ -1,4 +1,4 @@
-var REST_SERVICE_ROOT_URL = "http://service.oib.utah.edu:8080/infobutton-service/infoRequest?representedOrganization.id.root=http://axeium.net&xsltTransform=Infobutton_UI_AXEIUM&taskContext.c.c=";
+var REST_SERVICE_ROOT_URL = "http://service.oib.utah.edu:8080/infobutton-service/infoRequest?";
 /*
 problems:
   Hypertensive disorder - SNOMEDCT 38341003 
@@ -31,6 +31,7 @@ lab tests:
 sample of lab test URLS:  
   http://service.oib.utah.edu:8080/infobutton-service/infoRequest?representedOrganization.id.root=http://axeium.net&xsltTransform=Infobutton_UI_AXEIUM&taskContext.c.c=LABRREV&mainSearchCriteria.v.c=2571-8&mainSearchCriteria.v.cs=2.16.840.1.113883.6.1&mainSearchCriteria.v.dn=Triglycerides, Serum or Plasma&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json
   http://service.oib.utah.edu:8080/infobutton-service/infoRequest?representedOrganization.id.root=http://axeium.net&xsltTransform=Infobutton_UI_AXEIUM&taskContext.c.c=LABRREV&mainSearchCriteria.v.c=664-3&mainSearchCriteria.v.cs=2.16.840.1.113883.6.1&mainSearchCriteria.v.dn=Stat Gram Stain&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json
+  http://service.oib.utah.edu:8080/infobutton-service/infoRequest?representedOrganization.id.root=1.3.6.1.4.1.5884&                                    taskContext.c.c=LABRREV&mainSearchCriteria.v.c=664-3&mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.dn=Stat Gram Stain&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json
 */
 $.ajaxSetup({timeout:10000});
 
@@ -38,7 +39,8 @@ var infoButtonModel = Backbone.Model.extend({
   defaults: {
     'mainsearchcriteria_v_c' : '',   //toLower() and replace . with _ for easier use
     'mainsearchcriteria_v_dn' : '',   //toLower() and replace . with _ for easier use
-    'infobuttontype' : ''
+    'infobuttontype' : '',
+    'feed' : ''
   },
   validate: function(attributes){
     // add this later
@@ -48,21 +50,39 @@ var infoButtonModel = Backbone.Model.extend({
   },
   urlRoot: REST_SERVICE_ROOT_URL,
   url : function() {
-    var urlbase = '';
+    // URL for AXEIUM
+    //var urlbase = this.urlRoot + "representedOrganization.id.root=http://axeium.net&xsltTransform=Infobutton_UI_AXEIUM&taskContext.c.c=";
+    // URL For University of Utah
+    var urlbase = this.urlRoot + "representedOrganization.id.root=1.3.6.1.4.1.5884&taskContext.c.c=";
     switch(this.attributes.infobuttontype) {
       case 'problem':
-        urlbase = this.urlRoot + "PROBLISTREV&mainSearchCriteria.v.cs=2.16.840.1.113883.6.96&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json";
+        urlbase += "PROBLISTREV&mainSearchCriteria.v.cs=2.16.840.1.113883.6.96&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json";
         break;
       case 'lab':
-        urlbase = this.urlRoot + "LABRREV&mainSearchCriteria.v.cs=2.16.840.1.113883.6.1&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json";
+        urlbase += "LABRREV&mainSearchCriteria.v.cs=2.16.840.1.113883.6.1&encounter.c.c=AMB&informationRecipient=PROV&informationRecipient.languageCode.c=en&informationRecipient.healthCareProvider.c.c=200000000X&performer=PROV&performer.languageCode.c=en&performer.healthCareProvider.c.c=200000000X&knowledgeResponseType=application/json";
         break;
       case 'medication':
         break;
+      /*
       default:
-        console.log("Invalid or Unknown infobutton type, cannot retrieve data");
+        console.log("Invalid or Unknown infobutton type (value: '", this.attributes.infobuttontype, "'), cannot retrieve data");
+        */
     }
     return  urlbase + "&mainSearchCriteria.v.c=" + this.attributes.mainsearchcriteria_v_c + 
       "&mainSearchCriteria.v.dn=" + this.attributes.mainsearchcriteria_v_dn;
+  },
+  sync: function(method, model, options) {
+    //extend success function to check for non-empty server response
+    if (options.success) {
+      var orig_success = options.success;
+      options.success = function(response) {
+        if (jQuery.isEmptyObject(response))
+          options.error(response);
+        else
+          orig_success(response);
+      };
+    }    
+    return Backbone.sync(method, model, options);
   },
   parse: function(response) {
     // map server response to expected object attributes

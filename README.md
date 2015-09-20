@@ -21,9 +21,9 @@ An open-access tool that allows users of OpenInfobutton to create knowledge reso
 * Bootstrap - http://getbootstrap.com/ (CSS and some UI Javascript functionality)
 
 ## To Do
-* Test in IE, Firefox, Safari
-* Push to publically accessible URL
-* Web service does return JSON response for medications. Need to use XML response type if want medication information.
+* Push to publicly accessible URL
+* Web service does not return JSON response for medications. Need to use XML response type if want medication information.
+* As of now, web service no longer returns values for LOINC codes selected.
 * Create medication view for model to display relevant information: URL, Summary, other details
 * Fix background color for multi-medication per problem list row - doesn't work on screens smaller than 1280 wide
 
