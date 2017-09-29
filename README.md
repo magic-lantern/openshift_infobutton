@@ -1,6 +1,8 @@
 # BMI 6300 Infobutton Demonstration
 This is a simple example of how to use HL7 context aware infobuttons. All functionality in this repository is client side code - data is requested via GET request to lite.bmi.utah.edu. To install oe run application, download repository and place in directory that can be served via a web server.
 
+Currently this app is available via a free openshift v3 account at: http://infobutton-magiclantern.7e14.starter-us-west-2.openshiftapps.com - please note that it often will fail when the first user tries to launch it. Wait 30 seconds or so, then try again and it should work.
+
 For more information about infobuttons, see:
 
 * http://www.openinfobutton.org
